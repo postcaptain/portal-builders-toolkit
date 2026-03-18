@@ -2,19 +2,19 @@
   {
     "key": "lorem-short",
     "label": "Copy short lorem",
-    "grid": { "row": 1, "col": 1, "colSpan": 4 },
+    "width": "full",
     "text": "Lorem ipsum dolor sit amet."
   },
   {
     "key": "lorem-long",
     "label": "Copy long lorem",
-    "grid": { "row": 2, "col": 1, "colSpan": 4 },
+    "width": "full",
     "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit,\nsed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
   },
   {
     "key": "welcome-template",
     "label": "Copy welcome",
-    "grid": { "row": 3, "col": 1, "colSpan": 4 },
+    "width": "full",
     "text": "Hi there,\n\nThanks for reaching out."
   }
 ]
