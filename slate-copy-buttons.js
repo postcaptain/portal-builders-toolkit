@@ -3,6 +3,8 @@ const defaultGridConfig = {
   gap: "12px"
 };
 
+const snippetCache = new Map();
+
 function ensureBaseStyles() {
   if (document.getElementById("slate-copy-buttons-styles")) return;
 
@@ -89,7 +91,8 @@ function normalizeItems(items) {
   return items.map((item) => ({
     key: item.key,
     label: item.label,
-    text: item.text ?? "",
+    text: item.text ?? null,
+    source: item.source ?? null,
     width: item.width ?? "auto",
     grid: item.grid,
     visible: item.visible
@@ -124,10 +127,38 @@ function buildRegistry(items) {
     items.map((item) => [
       item.key,
       {
-        text: item.text
+        text: item.text,
+        source: item.source
       }
     ])
   );
+}
+
+async function fetchSourceText(sourceUrl) {
+  if (snippetCache.has(sourceUrl)) {
+    return snippetCache.get(sourceUrl);
+  }
+
+  const response = await fetch(sourceUrl, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error(`Failed to load source: ${response.status}`);
+  }
+
+  const text = await response.text();
+  snippetCache.set(sourceUrl, text);
+  return text;
+}
+
+async function resolveCopyText(entry) {
+  if (entry.text != null) {
+    return entry.text;
+  }
+
+  if (entry.source) {
+    return await fetchSourceText(entry.source);
+  }
+
+  throw new Error("No text or source defined for copy item.");
 }
 
 async function copyByKey(registry, key) {
@@ -136,7 +167,8 @@ async function copyByKey(registry, key) {
     throw new Error(`Unknown copy key: ${key}`);
   }
 
-  await navigator.clipboard.writeText(entry.text);
+  const text = await resolveCopyText(entry);
+  await navigator.clipboard.writeText(text);
 }
 
 function bindCopyHandler(container, registry) {
