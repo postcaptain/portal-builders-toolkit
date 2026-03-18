@@ -1,0 +1,52 @@
+<style>
+  #content ul.subtabs li a {height: auto; font-size: 14px; text-align: center;}
+  .part ul.subtabs {margin: 0 0 1em; width:100%;}
+  .part ul.subtabs li {width:20%;}
+  .part ul.subtabs li a.active {color: #fff !important; background-color: #00669e;}
+  .part ul.subtabs li a:hover {background-color: #fafafa !important; color: #00669e !important;}
+</style>
+<ul class="subtabs">
+  <li>
+    <a href="#" data-tab="method_action_1">Tab Label 1</a>
+  </li>
+  <li>
+    <a href="#" data-tab="method_action_2">Tab Label 2</a>
+  </li>
+  <li>
+    <a href="#" data-tab="method_action_3">Tab Label 3</a>
+  </li>
+</ul>
+<div id="content_body">
+</div>
+<script type="text/javascript">
+/*<![CDATA[*/
+var loadTab = function (tab, queryString, isBack) {
+if (queryString) {
+var qs = FW.decodeFormValues(queryString);
+delete qs["tab"];
+queryString = FW.encodeFormValues(qs);
+queryString = queryString ? "&" + queryString : "";
+}
+if (!isBack) history.pushState(tab, null, "?tab=" + tab + queryString);
+$("a[data-tab]").removeClass("active");
+$("a[data-tab='" + tab + "']").addClass("active");
+FW.Lazy.Fetch("?cmd=" + tab + queryString, $("#content_body"));
+};
+
+window.addEventListener("popstate", function (e) {
+if (e.state) loadTab(e.state, location.search.substring(1), true);
+else history.back();
+});
+
+$("a[data-tab]").on("click", function () {
+loadTab($(this).data("tab"), location.search.substring(1));
+return false;
+});
+
+var qs = FW.decodeFormValues(location.search.substring(1));
+if (qs["tab"]) loadTab(qs["tab"], location.search.substring(1));
+else {
+var default_tab = $("ul.subtabs").find("li > a").eq(0).data("tab");
+loadTab(default_tab, location.search.substring(1));
+}
+/*]]>*/</script>
