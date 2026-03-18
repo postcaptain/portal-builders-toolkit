@@ -3,13 +3,19 @@
     "key": "liquid-table",
     "label": "Liquid Looping Table",
     "width": "full",
-    "text": "<table class=\"sortable searchable table\" data-search-text=\"Search...\">\n<colgroup><col /><col /><col /><col /></colgroup>\n<thead><tr class=\"column\"><th>Column 1</th><th>Column 2</th><th>Column 3</th><th>Column 4</th></tr></thead>\n<tbody>{% for item in node %}<tr><td>{{item.export1}}</td><td>{{item.export2}}</td><td>{{item.export3}}</td><td>{{item.export4}}</td></tr>{% endfor %}</tbody>\n</table>"
+    "source": "https://raw.githubusercontent.com/postcaptain/portal-builders-toolkit/main/snippets/liquid-table.html"
   },
   {
-    "key": "lorem-long",
-    "label": "Copy long lorem",
+    "key": "tabs",
+    "label": "Portal Tabs",
     "width": "full",
-    "text": "Lorem ipsum dolor sit amet, consectetur adipiscing elit,\nsed do eiusmod tempor incididunt ut labore et dolore magna aliqua."
+    "source": "https://raw.githubusercontent.com/postcaptain/portal-builders-toolkit/main/snippets/tabs.html"
+  },
+  {
+    "key": "popup",
+    "label": "Portal Pop Up",
+    "width": "full",
+    "source": "https://raw.githubusercontent.com/postcaptain/portal-builders-toolkit/main/snippets/popup.html"
   },
   {
     "key": "welcome-template",
