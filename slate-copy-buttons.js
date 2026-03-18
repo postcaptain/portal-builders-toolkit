@@ -3,22 +3,12 @@ const defaultGridConfig = {
   gap: "12px"
 };
 
-function applyGridConfig(container, config) {
-  container.style.display = "grid";
-  container.style.gridTemplateColumns = `repeat(${config.columns}, minmax(0, 1fr))`;
-  container.style.gap = config.gap;
-}
-
 function ensureBaseStyles() {
   if (document.getElementById("slate-copy-buttons-styles")) return;
 
   const style = document.createElement("style");
   style.id = "slate-copy-buttons-styles";
   style.textContent = `
-    #copy-buttons {
-      gap: var(--copy-buttons-gap, 12px);
-    }
-
     .copy-btn {
       appearance: none;
       border: 1px solid var(--copy-btn-border, #004d80);
@@ -28,7 +18,7 @@ function ensureBaseStyles() {
       padding: var(--copy-btn-padding-y, 0.85rem) var(--copy-btn-padding-x, 1rem);
       cursor: pointer;
       margin: 0;
-      transition: background 160ms ease, opacity 160ms ease;
+      transition: background 160ms ease, color 160ms ease, opacity 160ms ease;
     }
 
     .copy-btn:hover:not(:disabled) {
@@ -44,10 +34,16 @@ function ensureBaseStyles() {
   document.head.appendChild(style);
 }
 
-function getColumnSpan(config, totalColumns) {
-  if (config.grid?.colSpan) return config.grid.colSpan;
+function applyGridConfig(container, config) {
+  container.style.display = "grid";
+  container.style.gridTemplateColumns = `repeat(${config.columns}, minmax(0, 1fr))`;
+  container.style.gap = config.gap;
+}
 
-  switch (config.width) {
+function getColumnSpan(item, totalColumns) {
+  if (item.grid?.colSpan != null) return item.grid.colSpan;
+
+  switch (item.width) {
     case "full":
       return totalColumns;
     case "half":
@@ -58,17 +54,20 @@ function getColumnSpan(config, totalColumns) {
   }
 }
 
-function createCopyButton(key, config, totalColumns) {
+function createCopyButton(item, totalColumns) {
   const button = document.createElement("button");
-  const { row, col, rowSpan = 1 } = config.grid ?? {};
-  const colSpan = getColumnSpan(config, totalColumns);
+  const { row, col, rowSpan = 1 } = item.grid ?? {};
+  const colSpan = getColumnSpan(item, totalColumns);
 
   button.type = "button";
-  button.dataset.copyKey = key;
-  button.textContent = config.label;
+  button.dataset.copyKey = item.key;
+  button.textContent = item.label;
   button.className = "copy-btn";
 
-  if (row != null) button.style.gridRow = `${row} / span ${rowSpan}`;
+  if (row != null) {
+    button.style.gridRow = `${row} / span ${rowSpan}`;
+  }
+
   if (col != null) {
     button.style.gridColumn = `${col} / span ${colSpan}`;
   } else {
@@ -78,31 +77,36 @@ function createCopyButton(key, config, totalColumns) {
   return button;
 }
 
-function renderCopyButtons(container, registry, totalColumns) {
-  const buttons = [...registry.entries()]
-    .filter(([, config]) => config.visible !== false)
-    .map(([key, config]) => createCopyButton(key, config, totalColumns));
+function renderCopyButtons(container, items, totalColumns) {
+  const buttons = items
+    .filter((item) => item.visible !== false)
+    .map((item) => createCopyButton(item, totalColumns));
 
   container.replaceChildren(...buttons);
 }
 
-function buildRegistry(items) {
-  return new Map(
-    items.map((item) => [
-      item.key,
-      {
-        label: item.label,
-        grid: item.grid,
-        visible: item.visible,
-        resolve: async () => item.text
-      }
-    ])
-  );
+function normalizeItems(items) {
+  return items.map((item) => ({
+    key: item.key,
+    label: item.label,
+    text: item.text ?? "",
+    width: item.width ?? "auto",
+    grid: item.grid,
+    visible: item.visible
+  }));
 }
 
 function mergeItems(baseItems, extraItems) {
-  const merged = new Map(baseItems.map((item) => [item.key, item]));
-  for (const item of extraItems) merged.set(item.key, item);
+  const merged = new Map();
+
+  for (const item of normalizeItems(baseItems)) {
+    merged.set(item.key, item);
+  }
+
+  for (const item of normalizeItems(extraItems)) {
+    merged.set(item.key, item);
+  }
+
   return [...merged.values()];
 }
 
@@ -111,39 +115,36 @@ async function loadItems(configUrl) {
   if (!response.ok) {
     throw new Error(`Failed to load config: ${response.status}`);
   }
+
   return await response.json();
+}
+
+function buildRegistry(items) {
+  return new Map(
+    items.map((item) => [
+      item.key,
+      {
+        text: item.text
+      }
+    ])
+  );
 }
 
 async function copyByKey(registry, key) {
   const entry = registry.get(key);
-  if (!entry) throw new Error(`Unknown copy key: ${key}`);
+  if (!entry) {
+    throw new Error(`Unknown copy key: ${key}`);
+  }
 
-  const text = await entry.resolve();
-  await navigator.clipboard.writeText(text);
+  await navigator.clipboard.writeText(entry.text);
 }
 
-export async function initCopyButtons({
-  containerId = "copy-buttons",
-  configUrl,
-  gridConfig = defaultGridConfig,
-  extraItems = []
-} = {}) {
-  ensureBaseStyles();
-
-  const container = document.getElementById(containerId);
-  if (!container) throw new Error(`Container not found: ${containerId}`);
-
-  applyGridConfig(container, gridConfig);
-
-  const baseItems = configUrl ? await loadItems(configUrl) : [];
-  const mergedItems = mergeItems(baseItems, extraItems);
-  const registry = buildRegistry(mergedItems);
-
-  renderCopyButtons(container, registry, gridConfig.columns);
+function bindCopyHandler(container, registry) {
+  if (container.dataset.copyButtonsBound === "true") return;
 
   container.addEventListener("click", async (event) => {
     const button = event.target.closest("[data-copy-key]");
-    if (!button) return;
+    if (!button || !container.contains(button)) return;
 
     const originalLabel = button.textContent;
 
@@ -161,4 +162,29 @@ export async function initCopyButtons({
       }, 1200);
     }
   });
+
+  container.dataset.copyButtonsBound = "true";
+}
+
+export async function initCopyButtons({
+  containerId = "copy-buttons",
+  configUrl,
+  gridConfig = defaultGridConfig,
+  extraItems = []
+} = {}) {
+  ensureBaseStyles();
+
+  const container = document.getElementById(containerId);
+  if (!container) {
+    throw new Error(`Container not found: ${containerId}`);
+  }
+
+  applyGridConfig(container, gridConfig);
+
+  const baseItems = configUrl ? await loadItems(configUrl) : [];
+  const mergedItems = mergeItems(baseItems, extraItems);
+  const registry = buildRegistry(mergedItems);
+
+  renderCopyButtons(container, mergedItems, gridConfig.columns);
+  bindCopyHandler(container, registry);
 }
