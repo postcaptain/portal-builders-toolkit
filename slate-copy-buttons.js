@@ -44,9 +44,24 @@ function ensureBaseStyles() {
   document.head.appendChild(style);
 }
 
-function createCopyButton(key, config) {
+function getColumnSpan(config, totalColumns) {
+  if (config.grid?.colSpan) return config.grid.colSpan;
+
+  switch (config.width) {
+    case "full":
+      return totalColumns;
+    case "half":
+      return Math.max(1, Math.floor(totalColumns / 2));
+    case "auto":
+    default:
+      return 1;
+  }
+}
+
+function createCopyButton(key, config, totalColumns) {
   const button = document.createElement("button");
-  const { row, col, rowSpan = 1, colSpan = 1 } = config.grid ?? {};
+  const { row, col, rowSpan = 1 } = config.grid ?? {};
+  const colSpan = getColumnSpan(config, totalColumns);
 
   button.type = "button";
   button.dataset.copyKey = key;
@@ -54,15 +69,19 @@ function createCopyButton(key, config) {
   button.className = "copy-btn";
 
   if (row != null) button.style.gridRow = `${row} / span ${rowSpan}`;
-  if (col != null) button.style.gridColumn = `${col} / span ${colSpan}`;
+  if (col != null) {
+    button.style.gridColumn = `${col} / span ${colSpan}`;
+  } else {
+    button.style.gridColumn = `span ${colSpan}`;
+  }
 
   return button;
 }
 
-function renderCopyButtons(container, registry) {
+function renderCopyButtons(container, registry, totalColumns) {
   const buttons = [...registry.entries()]
     .filter(([, config]) => config.visible !== false)
-    .map(([key, config]) => createCopyButton(key, config));
+    .map(([key, config]) => createCopyButton(key, config, totalColumns));
 
   container.replaceChildren(...buttons);
 }
@@ -120,7 +139,7 @@ export async function initCopyButtons({
   const mergedItems = mergeItems(baseItems, extraItems);
   const registry = buildRegistry(mergedItems);
 
-  renderCopyButtons(container, registry);
+  renderCopyButtons(container, registry, gridConfig.columns);
 
   container.addEventListener("click", async (event) => {
     const button = event.target.closest("[data-copy-key]");
