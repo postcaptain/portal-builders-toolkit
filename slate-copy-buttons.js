@@ -27,6 +27,7 @@ function ensureBaseStyles() {
       color: var(--copy-btn-text, #ffffff);
       padding: var(--copy-btn-padding-y, 0.85rem) var(--copy-btn-padding-x, 1rem);
       cursor: pointer;
+      margin: 0;
       transition: background 160ms ease, opacity 160ms ease;
     }
 
