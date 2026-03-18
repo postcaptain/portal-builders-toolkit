@@ -1,0 +1,26 @@
+<table class="sortable searchable table" data-search-text="Search...">
+  <colgroup>
+    <col />
+    <col />
+    <col />
+    <col />
+  </colgroup>
+  <thead>
+    <tr class="column">
+      <th>Column 1</th>
+      <th>Column 2</th>
+      <th>Column 3</th>
+      <th>Column 4</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for item in node %}
+      <tr>
+        <td>{{item.export1}}</td>
+        <td>{{item.export2}}</td>
+        <td>{{item.export3}}</td>
+        <td>{{item.export4}}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
