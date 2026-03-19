@@ -16,11 +16,5 @@
     "label": "Portal Pop Up",
     "width": "full",
     "source": "https://raw.githubusercontent.com/postcaptain/portal-builders-toolkit/main/snippets/popup.html"
-  },
-  {
-    "key": "welcome-template",
-    "label": "Copy welcome",
-    "width": "full",
-    "text": "Hi there,\n\nThanks for reaching out."
   }
 ]
